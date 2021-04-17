@@ -1,5 +1,6 @@
 .idea
 /src
+__test__
 tslint.json
 tsconfig.json
 yarn-error.log

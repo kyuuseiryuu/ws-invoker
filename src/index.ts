@@ -1,16 +1,7 @@
-import * as winston from "winston";
 
-export const logger = winston.createLogger({
-  format: winston.format.json(),
-  transports: new winston.transports.Console(),
-  silent: true,
-});
-
-const defaultOption = {
-  debug: false,
+interface IOption {
+  logger: any;
 }
-
-type IOption = typeof defaultOption;
 
 interface IFuncMap {
   [funcName: string]: (params?: any) => any;
@@ -36,9 +27,10 @@ export default class Invoker {
 
   private ws: WebSocket;
   private readonly funcMap: IFuncMap;
+  private readonly option?: IOption;
 
-  public constructor (websocket: WebSocket, option: IOption = defaultOption) {
-    logger.silent = !defaultOption.debug;
+  public constructor (websocket: WebSocket, option?: IOption) {
+    this.option = option;
     this.ws = websocket;
     this.funcMap = {};
     this.setupWebSocket();
@@ -55,7 +47,7 @@ export default class Invoker {
     }
     this.funcMap[funcName] = implementFunc;
     if (!/(_DONE|_ERROR)/.test(funcName)) {
-      logger.info("Implement method", { funcName });
+      this.option?.logger.log("Implement method", { funcName });
     }
   }
 
@@ -65,7 +57,7 @@ export default class Invoker {
     callback?: (param?: R) => void | Promise<R>,
     onError?: (error?: string) => void,
   ) {
-    logger.info("Call remote method", { funcName });
+    this.option?.logger.log("Call remote method", { funcName });
     if (Boolean(callback)) {
       this.implement(Invoker.callbackFuncName(funcName), callback);
     }
@@ -91,7 +83,7 @@ export default class Invoker {
         if (/_ERROR$/.test(funcName)) {
           return;
         }
-        logger.info("Method not implement", { funcName });
+        this.option?.logger.log("Method not implement", { funcName });
         this.invoke(Invoker.callbackFuncName(funcName, "ERROR"), { message: "Method not implement" });
         return;
       }
@@ -102,11 +94,11 @@ export default class Invoker {
         }
         this.invoke(Invoker.callbackFuncName(funcName), result);
       } catch (e) {
-        logger.info("Processing message error", { raw: message });
+        this.option?.logger.log("Processing message error", { raw: message });
         this.invoke(Invoker.callbackFuncName(funcName, "ERROR"), e);
       }
     } catch (error) {
-      logger.info("Parse message error", { error: error.message, message });
+      this.option?.logger.log("Parse message error", { error: error.message, message });
     }
   }
 }

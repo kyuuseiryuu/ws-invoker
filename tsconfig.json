@@ -2,9 +2,20 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "esnext",
-    "sourceMap": true
+    "sourceMap": true,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipDefaultLibCheck": true,
+    "sourceRoot": "./src",
+    "outDir": "./dist"
   },
+  "include": [
+    "src"
+  ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "__test__",
+    "jest.config.ts"
   ]
 }

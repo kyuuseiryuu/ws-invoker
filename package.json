@@ -1,0 +1,18 @@
+{
+  "name": "ws-invoker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "kyuuseiryuu",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "lint": "tslint --fix -c tslint.json src/**/*.ts"
+  },
+  "devDependencies": {
+    "ts-lint": "^4.5.1",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "winston": "^3.3.3"
+  }
+}

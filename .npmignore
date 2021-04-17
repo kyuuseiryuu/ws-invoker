@@ -1,0 +1,6 @@
+.idea
+/src
+tslint.json
+tsconfig.json
+yarn-error.log
+ws-invoker-*.tgz

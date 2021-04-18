@@ -1,6 +1,10 @@
 .idea
 /src
+__test__
 tslint.json
 tsconfig.json
 yarn-error.log
 ws-invoker-*.tgz
+jest.config.ts
+/coverage
+jest.config.js

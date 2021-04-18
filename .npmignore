@@ -6,3 +6,4 @@ tsconfig.json
 yarn-error.log
 ws-invoker-*.tgz
 jest.config.ts
+/coverage

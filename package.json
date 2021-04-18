@@ -1,5 +1,5 @@
 {
-  "name": "ws-invoker",
+  "name": "@kyuuseiryuu/ws-invoker",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist",

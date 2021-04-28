@@ -1,12 +1,12 @@
 import * as express from "express";
 import * as expressWs from "express-ws";
-import Invoker from "../dist";
+import Invoker from "../src";
 let app = express();
 const wsApp = expressWs(app);
 const router = express.Router();
 wsApp.applyTo(router);
 router.ws('/', (ws, request) => {
-  const sInvoker = new Invoker(ws as any);
+  const sInvoker = new Invoker(ws as any, { logger: console });
   sInvoker.implement<{ a: number, b: number }, number>('add', (param) => {
     if (!param) return 0;
     const { a, b } = param;

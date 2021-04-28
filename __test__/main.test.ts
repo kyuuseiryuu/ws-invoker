@@ -1,4 +1,4 @@
-import Invoker from '../dist';
+import Invoker from '../src';
 import {w3cwebsocket} from "websocket";
 
 const invoker = new Invoker(null as any, { logger: console });
@@ -19,7 +19,13 @@ describe('main test', () => {
     const ws = new w3cwebsocket('ws://127.0.0.1:3030/ws');
     invoker.setWebSocket(ws as any);
     ws.onopen = () => {
-      invoker.invoke('test', null);
+      invoker.invoke('test', null, () => {
+        ws.close();
+        done();
+      }, () => {
+        ws.close();
+        done()
+      });
     }
   });
 });

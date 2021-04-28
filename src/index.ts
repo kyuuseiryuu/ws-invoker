@@ -20,6 +20,7 @@ interface IFuncMap {
 interface IWebSocketInvokeRequest<T> {
   funcName: string;
   param?: T;
+  DONT_FEED_BACK: boolean;
 }
 
 type ImplementReturnType<T> = T | Promise<T> | void | any;
@@ -43,6 +44,16 @@ export default class Invoker {
 
   private static callbackFuncName (funcName: string, type: "DONE" | "ERROR" = "DONE"): string {
     return [funcName, type].join(SEPARATOR);
+  }
+
+  private static isDoneCall(funcName: string): boolean {
+    const [_, funcType, ...overflow] = funcName.split(SEPARATOR);
+    return funcType === 'DONE' && overflow.length === 0;
+  }
+
+  private static isErrorCall(funcName: string): boolean {
+    const [_, funcType, ...overflow] = funcName.split(SEPARATOR);
+    return funcType === 'ERROR' && overflow.length === 0;
   }
 
   private ws?: WebSocket;
@@ -71,7 +82,7 @@ export default class Invoker {
       return;
     }
     this.funcMap[funcName] = implementFunc;
-    if (!/(_DONE|_ERROR)/.test(funcName)) {
+    if (!/(DONE|ERROR)/.test(funcName)) {
       this.option?.logger.log("Implement method", { funcName });
     }
   }
@@ -81,18 +92,21 @@ export default class Invoker {
     param?: P,
     callback?: IInvokeCallback<R>,
     onError?: IOnErrorCallback,
+    dontFeedBack?: boolean,
   ) {
     this.option?.logger.log("Call remote method", { funcName });
-    if (Boolean(callback)) {
-      this.implementDoneFunc<R>(funcName, callback);
-    }
-    if (Boolean(onError)) {
-      this.implementErrorFunc(funcName, onError);
-    }
+    this.implementDoneFunc<R>(funcName, callback || defaultCallback);
+    this.implementErrorFunc(funcName, onError || defaultOnError);
     this.ws?.send(JSON.stringify({
       funcName,
       param,
+      DONT_FEED_BACK: dontFeedBack,
     } as IWebSocketInvokeRequest<P>));
+  }
+
+  private hasImplement(funcName: string): boolean {
+    const [realFuncName] = funcName.split(SEPARATOR);
+    return this.funcMap[realFuncName] instanceof Function;
   }
 
   private setupWebSocket () {
@@ -113,27 +127,30 @@ export default class Invoker {
 
   private async onMessage (message: string) {
     try {
-      const { funcName, param } = JSON.parse(message) as IWebSocketInvokeRequest<any>;
+      const { funcName, param, DONT_FEED_BACK } = JSON.parse(message) as IWebSocketInvokeRequest<any>;
       const [realFuncName, funcType, ...overflow] = funcName.split(SEPARATOR);
-      if (!funcType && !this.funcMap[realFuncName]) {
-        this.invoke(Invoker.callbackFuncName(realFuncName, "ERROR"), { message: "Method not implement" });
-        this.option?.logger.log("Method not implement", { funcName: realFuncName });
-        return;
-      }
-      if (funcType === 'ERROR' && this.errorFuncMap[realFuncName]) {
+      this.option?.logger.log({ realFuncName, funcType, overflow, funcName, param, DONT_FEED_BACK });
+      if (overflow.length > 0) return;
+      if (Invoker.isErrorCall(funcName)) {
         this.errorFuncMap[realFuncName](param);
         return;
       }
-      if (funcType === "DONE" && this.doneFuncMap[realFuncName]) {
+      if (Invoker.isDoneCall(funcName)) {
         this.doneFuncMap[realFuncName](param);
+        return;
+      }
+      if (!(this.hasImplement(funcName))) {
+        if (DONT_FEED_BACK) return;
+        this.invoke(Invoker.callbackFuncName(realFuncName, "ERROR"), { message: "Method not implement" }, defaultCallback, defaultOnError, true);
+        this.option?.logger.log("Method not implement", { funcName: realFuncName });
         return;
       }
       try {
         const result = await this.funcMap[realFuncName](param);
-        this.invoke(Invoker.callbackFuncName(realFuncName, "DONE"), result);
+        this.invoke(Invoker.callbackFuncName(realFuncName, "DONE"), result, defaultCallback, defaultOnError);
       } catch (e) {
         this.option?.logger.log("Processing message error", { raw: message });
-        this.invoke(Invoker.callbackFuncName(funcName, "ERROR"), { message: e.message, error: e });
+        this.invoke(Invoker.callbackFuncName(funcName, "ERROR"), { message: e.message, error: e }, defaultCallback, defaultOnError);
       }
     } catch (error) {
       this.option?.logger.log("Parse message error", { error: error.message, message });
@@ -150,3 +167,4 @@ export default class Invoker {
     this.errorFuncMap[funcName] = onError;
   }
 }
+

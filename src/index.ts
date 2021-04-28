@@ -1,3 +1,4 @@
+const SEPARATOR = "-->";
 
 interface IOption {
   logger: any;
@@ -41,7 +42,7 @@ interface IOnErrorCallback {
 export default class Invoker {
 
   private static callbackFuncName (funcName: string, type: "DONE" | "ERROR" = "DONE"): string {
-    return [funcName, type].join("_");
+    return [funcName, type].join(SEPARATOR);
   }
 
   private ws?: WebSocket;
@@ -113,7 +114,7 @@ export default class Invoker {
   private async onMessage (message: string) {
     try {
       const { funcName, param } = JSON.parse(message) as IWebSocketInvokeRequest<any>;
-      const [realFuncName, funcType, ...overflow] = funcName.split('_');
+      const [realFuncName, funcType, ...overflow] = funcName.split(SEPARATOR);
       if (!funcType && !this.funcMap[realFuncName]) {
         this.invoke(Invoker.callbackFuncName(realFuncName, "ERROR"), { message: "Method not implement" });
         this.option?.logger.log("Method not implement", { funcName: realFuncName });

@@ -8,7 +8,7 @@
 ```typescript
 router.ws('/', (ws, request) => {
   const sInvoker = new Invoker(ws as any);
-  sInvoker.implement<{ a: number, b: number }, number>('add', (param) => {
+  sInvoker.handle<{ a: number, b: number }, number>('add', (param) => {
     if (!param) return 0;
     const { a, b } = param;
     return a + b;

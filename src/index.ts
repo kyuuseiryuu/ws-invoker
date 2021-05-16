@@ -77,6 +77,10 @@ export default class Invoker {
   }
 
 
+  public handle<P = any, R = any> (funcName: string, implementFunc?: (param?: P) => ImplementReturnType<R>) {
+    this.implement(funcName, implementFunc);
+  }
+
   public implement<P = any, R = any> (funcName: string, implementFunc?: (param?: P) => ImplementReturnType<R>) {
     if (!funcName || !implementFunc) {
       return;
